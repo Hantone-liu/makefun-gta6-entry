@@ -1,53 +1,64 @@
-// Keyboard and pointer input. Held keys give a steering direction; one-shot presses (start or
-// restart, pause) are queued as bit flags and taken once by the loop, so a press between two
-// frames is never lost and never counted twice.
-
-export const ACTION_CONFIRM = 1;
-export const ACTION_PAUSE = 2;
-
-const LEFT = new Set(['ArrowLeft', 'KeyA']);
-const RIGHT = new Set(['ArrowRight', 'KeyD']);
-const CONFIRM = new Set(['Space', 'Enter']);
-const PAUSE = new Set(['KeyP', 'Escape']);
-
-export function createInput(target) {
-  let left = false;
-  let right = false;
-  let actions = 0;
-
-  window.addEventListener('keydown', (event) => {
-    if (LEFT.has(event.code)) left = true;
-    else if (RIGHT.has(event.code)) right = true;
-    else if (CONFIRM.has(event.code)) {
-      if (!event.repeat) actions |= ACTION_CONFIRM;
-    } else if (PAUSE.has(event.code)) {
-      if (!event.repeat) actions |= ACTION_PAUSE;
-    } else return;
-    event.preventDefault();
-  });
-  window.addEventListener('keyup', (event) => {
-    if (LEFT.has(event.code)) left = false;
-    else if (RIGHT.has(event.code)) right = false;
-  });
-  // A key released while the tab is hidden never sends keyup: let go of everything on blur.
-  window.addEventListener('blur', () => {
-    left = false;
-    right = false;
-  });
-  target.addEventListener('pointerdown', () => {
-    actions |= ACTION_CONFIRM;
-  });
-
-  return {
-    /** -1 for left, 1 for right, 0 for neither or both. */
-    direction() {
-      return (right ? 1 : 0) - (left ? 1 : 0);
-    },
-    /** The one-shot presses since the last call, as ACTION_* flags. */
-    takeActions() {
-      const taken = actions;
-      actions = 0;
-      return taken;
-    },
+// SOLMARINA — keyboard and mouse. WASD/arrows move, Shift sprints, E enters
+// or steals a car, F punches, Space is the handbrake, R restarts, Esc pauses,
+// M mutes. Dragging the mouse orbits the third-person camera; a click shoots
+// when the player is armed. All state lives here; the game reads it.
+export function createInput(canvas) {
+  const input = {
+    keys: Object.create(null),
+    orbitDX: 0, orbitDY: 0, clicked: false, clickX: 0, clickY: 0,
+    dragging: false, lastX: 0, lastY: 0,
   };
+
+  function down(e) {
+    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    input.keys[k] = true;
+    if ([' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) e.preventDefault();
+  }
+  function up(e) {
+    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    input.keys[k] = false;
+  }
+  window.addEventListener('keydown', down);
+  window.addEventListener('keyup', up);
+  window.addEventListener('blur', () => { input.keys = Object.create(null); });
+
+  canvas.addEventListener('pointerdown', (e) => {
+    input.dragging = true; input.lastX = e.clientX; input.lastY = e.clientY;
+  });
+  window.addEventListener('pointermove', (e) => {
+    if (!input.dragging) return;
+    input.orbitDX += e.clientX - input.lastX;
+    input.orbitDY += e.clientY - input.lastY;
+    input.lastX = e.clientX; input.lastY = e.clientY;
+  });
+  window.addEventListener('pointerup', () => { input.dragging = false; });
+  canvas.addEventListener('click', (e) => {
+    input.clicked = true; input.clickX = e.clientX; input.clickY = e.clientY;
+  });
+
+  input.axis = function axis() {
+    const k = input.keys;
+    const x = (k.d || k.ArrowRight ? 1 : 0) - (k.a || k.ArrowLeft ? 1 : 0);
+    const y = (k.w || k.ArrowUp ? 1 : 0) - (k.s || k.ArrowDown ? 1 : 0);
+    return { x, y };
+  };
+  input.pressed = function pressed(key) {
+    const k = input.keys;
+    return !!(k[key] || (key === 'e' && k.e) || (key === 'f' && k.f));
+  };
+  input.consumeOrbit = function consumeOrbit() {
+    const o = { dx: input.orbitDX, dy: input.orbitDY };
+    input.orbitDX = 0; input.orbitDY = 0;
+    return o;
+  };
+  input.consumeClick = function consumeClick() {
+    const c = input.clicked;
+    input.clicked = false;
+    return c;
+  };
+  input.clear = function clear() {
+    input.keys = Object.create(null);
+    input.orbitDX = 0; input.orbitDY = 0; input.clicked = false;
+  };
+  return input;
 }
