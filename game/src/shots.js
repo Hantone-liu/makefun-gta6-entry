@@ -68,6 +68,16 @@ function placeTraffic(G, x, z, heading) {
   return car;
 }
 
+// A pedestrian repositioned into the frame: a real game unit, just placed
+// where the camera can see it (like placePolice / placeTraffic below).
+function placePed(G, i, x, z, heading) {
+  const ped = G.peds[i % G.peds.length];
+  ped.x = x; ped.z = z; ped.heading = heading;
+  ped.target = null; ped.state = 'walk'; ped.stateT = 8;
+  ped.mesh.position.set(x, 0, z);
+  ped.mesh.rotation.y = heading;
+}
+
 export function stageShot(name, G) {
   const S = G.stage;
   // The frame must show the game, not a menu: hide every screen first.
@@ -101,15 +111,36 @@ export function stageShot(name, G) {
     G.hud.update(G);
     S.renderer.render(S.scene, S.camera);
   } else if (name === 'street') {
-    // On foot in the city: plaza, fountain, pedestrians, traffic, hotels.
-    G.player.x = -8; G.player.z = 30; G.player.heading = Math.PI;
-    G.player.mesh.position.set(-8, 0, 30);
-    G.player.mesh.rotation.y = Math.PI;
+    // On foot in the city: Marco by the plaza fountain, pedestrians
+    // around him, traffic on the avenue — a living city, not an empty lot.
+    // The camera sits close (6 units) so the player reads large, and the
+    // frame faces the fountain from the plaza's sunny south-east corner,
+    // clear of the long building shadows that darkened the old shot.
+    const heading = Math.atan2(0 - 10, 0 - 12); // toward the fountain
+    G.player.x = 10; G.player.z = 12; G.player.heading = heading;
+    G.player.mesh.position.set(10, 0, 12);
+    G.player.mesh.rotation.y = heading;
     G.player.cameraYaw = 0;
     G.player.cash = 150; G.player.rep = 1;
     G.missions.index = -1; G.missions.state = 'idle'; // free roam, no mission banner
     simSeconds(G, 4, null);
-    placeCamera(G, -8 + Math.sin(0) * 9, 4.2, 30 + Math.cos(0) * 9, -8, 1.5, 30 - 12);
+    // Life in the frame: five pedestrians strolling around the fountain
+    // (all outside its 10-unit wall, on the near and side rims where the
+    // low camera can actually see them), and two traffic cars on the
+    // avenues, placed wide of the fountain's occlusion cone (it hides
+    // anything near the view axis behind it): one up the north avenue
+    // on the right, one up the west avenue left.
+    placePed(G, 0, 11, 0, 0.5);
+    placePed(G, 1, -11, 0, -1.2);
+    placePed(G, 2, 0, 12, 2.2);
+    placePed(G, 3, 13, 3, -2.0);
+    placePed(G, 4, -13, 8, 1.0);
+    placeTraffic(G, 14, -27, Math.PI / 2);
+    placeTraffic(G, -27, 6, Math.PI);
+    const yaw = heading + Math.PI;
+    placeCamera(G,
+      10 + Math.sin(yaw) * 6, 3.0, 12 + Math.cos(yaw) * 6,
+      10 + Math.sin(heading) * 8, 1.6, 12 + Math.cos(heading) * 8);
     G.hud.update(G);
     S.renderer.render(S.scene, S.camera);
   } else if (name === 'heat') {

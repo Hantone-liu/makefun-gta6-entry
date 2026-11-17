@@ -55,9 +55,12 @@ export function createStage(canvas) {
   sunHalo.lookAt(0, 60, 0);
   scene.add(sunHalo);
 
-  // Lights: warm low sun with shadows + pink sky bounce.
+  // Lights: warm low sun with shadows + pink sky bounce. The sun sits
+  // high enough (~45 deg) that building shadows stay short and never
+  // blanket the plaza foreground; the hemisphere lift keeps shadowed
+  // ground readable instead of a black band.
   const sunLight = new THREE.DirectionalLight(0xffc98a, 2.6);
-  sunLight.position.set(-180, 140, -120);
+  sunLight.position.set(-170, 205, -110);
   sunLight.castShadow = true;
   sunLight.shadow.mapSize.set(2048, 2048);
   sunLight.shadow.camera.left = -280; sunLight.shadow.camera.right = 280;
@@ -65,7 +68,7 @@ export function createStage(canvas) {
   sunLight.shadow.camera.far = 700;
   sunLight.shadow.bias = -0.0004;
   scene.add(sunLight);
-  scene.add(new THREE.HemisphereLight(0xffb88a, 0x8a6a5a, 0.85));
+  scene.add(new THREE.HemisphereLight(0xffb88a, 0x8a6a5a, 1.05));
   const fill = new THREE.DirectionalLight(0x7a8ac8, 0.35);
   fill.position.set(150, 80, 200);
   scene.add(fill);

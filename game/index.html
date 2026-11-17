@@ -25,11 +25,11 @@
   .stat-row { display: flex; justify-content: space-between; font-size: 15px; font-weight: 700; }
   .stat-row .label { color: var(--dim); font-weight: 400; font-size: 12px; letter-spacing: 1px; }
   #cash-text { color: var(--cash); }
-  #hud-top-center { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); text-align: center; max-width: 46%; }
-  #wanted-stars { font-size: 26px; letter-spacing: 4px; color: #ffd21f; text-shadow: 0 0 12px rgba(255,210,31,0.7); }
+  #hud-top-center { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); text-align: center; max-width: 46%; }
+  #wanted-stars { display: inline-block; font-size: 28px; letter-spacing: 6px; line-height: 1.1; color: #ffd21f; text-shadow: 0 0 12px rgba(255,210,31,0.7); background: var(--glass); border: 1px solid var(--border); border-radius: 999px; padding: 6px 18px 8px 24px; box-shadow: 0 4px 24px rgba(0,0,0,0.35); }
   #wanted-stars.hot { color: #ff5a3c; text-shadow: 0 0 14px rgba(255,90,60,0.9); animation: pulse 0.8s infinite; }
   @keyframes pulse { 50% { opacity: 0.55; } }
-  #objective { margin-top: 4px; font-size: 14px; line-height: 1.35; }
+  #objective { margin-top: 12px; font-size: 14px; line-height: 1.35; }
   #objective b { color: var(--accent-soft); }
   #objective .timer { color: var(--cash); font-weight: 700; }
   #objective .dist { color: #7ac74f; font-weight: 700; }
